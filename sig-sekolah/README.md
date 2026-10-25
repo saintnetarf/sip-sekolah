@@ -1,58 +1,120 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Aplikasi SIG Sekolah (Laravel + MySQL + OpenStreetMap)
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Aplikasi Sistem Informasi Geografis (SIG) untuk pendataan sekolah beserta titik koordinatnya dengan visualisasi peta interaktif berbasis OpenStreetMap dan Leaflet.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 1. Fitur Utama
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- **Peta Publik (`/`)**:
+  - Peta digital OpenStreetMap Leaflet interaktif.
+  - Menampilkan sebaran seluruh sekolah di Kota Banjarmasin dan sekitarnya.
+  - Filter jenjang pendidikan (Semua jenjang, SD, SMP, SMA, SMK).
+  - Popup detail sekolah: Nama, NPSN, Jenjang, Status, Alamat, Kecamatan, Telepon, dan Koordinat.
+  - Proteksi XSS (escape HTML pada popup peta).
+- **Endpoint GeoJSON (`/data/sekolah`)**:
+  - Format standar GeoJSON `FeatureCollection`.
+  - Koordinat standar `[longitude, latitude]`.
+  - Filter parameter `?jenjang=`.
+- **Manajemen Data Sekolah / Admin (`/admin/sekolah`)**:
+  - Daftar data sekolah dengan pencarian dinamis (`?q=`) berdasarkan nama, NPSN, atau kecamatan.
+  - Paginasi data (10 data per halaman).
+  - Formulir tambah dan ubah data dilengkapi peta interaktif (`map-picker`):
+    - Klik pada peta untuk mengisi koordinat secara otomatis.
+    - Drag marker untuk menyesuaikan lokasi.
+    - Input koordinat manual yang langsung memusatkan marker pada peta.
+  - Hapus data dengan konfirmasi.
+  - Validasi ketat dan pesan kesalahan dalam Bahasa Indonesia.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+---
 
-## Learning Laravel
+## 2. Persyaratan Sistem
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+- PHP >= 8.3 (Diuji pada PHP 8.4)
+- MySQL Server (misal melalui DBngin, Homebrew, atau XAMPP)
+- Composer
+- Node.js & npm
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+---
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+## 3. Langkah Instalasi
 
-## Agentic Development
+1. **Masuk ke folder proyek:**
+   ```bash
+   cd sig-sekolah
+   ```
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+2. **Buat Database MySQL:**
+   Pastikan MySQL berjalan, lalu buat database:
+   ```sql
+   CREATE DATABASE sig_sekolah CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+   ```
 
+3. **Konfigurasi Environment:**
+   Salin `.env.example` menjadi `.env`:
+   ```bash
+   cp .env.example .env
+   ```
+   Pastikan konfigurasi database di `.env` sesuai:
+   ```env
+   DB_CONNECTION=mysql
+   DB_HOST=127.0.0.1
+   DB_PORT=3306
+   DB_DATABASE=sig_sekolah
+   DB_USERNAME=root
+   DB_PASSWORD=
+   ```
+
+4. **Instal Dependensi PHP:**
+   ```bash
+   composer install
+   ```
+
+5. **Generate Application Key:**
+   ```bash
+   php artisan key:generate
+   ```
+
+6. **Migrasi Database & Seeder:**
+   Jalankan migrasi tabel `sekolahs` dan data awal 8 sekolah contoh:
+   ```bash
+   php artisan migrate --seed
+   ```
+
+7. **Instal dan Build Dependensi Frontend (Tailwind CSS & Vite):**
+   ```bash
+   npm install
+   npm run build
+   ```
+
+---
+
+## 4. Menjalankan Aplikasi
+
+Jalankan local development server Laravel:
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+php artisan serve
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+Buka browser dan akses URL berikut:
+- **Peta Publik:** [http://127.0.0.1:8000/](http://127.0.0.1:8000/)
+- **Kelola Data Sekolah (Admin):** [http://127.0.0.1:8000/admin/sekolah](http://127.0.0.1:8000/admin/sekolah)
+- **Endpoint Data GeoJSON:** [http://127.0.0.1:8000/data/sekolah](http://127.0.0.1:8000/data/sekolah)
 
-## Contributing
+---
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## 5. Menjalankan Pengujian Otomatis
 
-## Code of Conduct
+Jalankan test suite menggunakan PHPUnit:
+```bash
+php artisan test
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Semua 12 pengujian mencakup fungsionalitas CRUD, validasi input, GeoJSON koordinat, filter jenjang, dan respons HTTP.
 
-## Security Vulnerabilities
+---
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## 6. Catatan Keamanan
 
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+> [!WARNING]
+> Halaman admin pada modul praktikum ini sengaja dibuat tanpa autentikasi / login untuk keperluan pembelajaran praktikum SIG. Jangan mempublikasikan aplikasi ini ke internet publik sebelum menambahkan mekanisme autentikasi (misalnya Laravel Breeze, Fortify, atau middleware auth).
