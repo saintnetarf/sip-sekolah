@@ -22,7 +22,7 @@ class PetaController extends Controller
      */
     public function geojson(Request $request): JsonResponse
     {
-        $query = Sekolah::query();
+        $query = Sekolah::with('profil');
 
         if ($jenjang = $request->query('jenjang')) {
             $query->where('jenjang', $jenjang);
@@ -49,6 +49,10 @@ class PetaController extends Controller
                     'alamat' => $sekolah->alamat,
                     'kecamatan' => $sekolah->kecamatan,
                     'telepon' => $sekolah->telepon,
+                    'kepala_sekolah' => $sekolah->profil?->kepala_sekolah,
+                    'akreditasi' => $sekolah->profil?->akreditasi,
+                    'jumlah_siswa' => $sekolah->profil?->jumlah_siswa,
+                    'jumlah_guru' => $sekolah->profil?->jumlah_guru,
                 ],
             ];
         })->values();

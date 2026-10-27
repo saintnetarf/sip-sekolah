@@ -7,15 +7,22 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['name', 'email', 'password'])]
+#[Fillable(['name', 'email', 'password', 'role', 'sekolah_id'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
+
+    public const ROLE_ADMIN = 'admin';
+
+    public const ROLE_DINAS = 'dinas';
+
+    public const ROLE_SEKOLAH = 'sekolah';
 
     /**
      * Get the attributes that should be cast.
@@ -28,5 +35,38 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    /**
+     * Relasi ke Sekolah (jika role sekolah).
+     */
+    public function sekolah(): BelongsTo
+    {
+        return $this->belongsTo(Sekolah::class);
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->role === self::ROLE_ADMIN;
+    }
+
+    public function isDinas(): bool
+    {
+        return $this->role === self::ROLE_DINAS;
+    }
+
+    public function isSekolah(): bool
+    {
+        return $this->role === self::ROLE_SEKOLAH;
+    }
+
+    public function roleLabel(): string
+    {
+        return match ($this->role) {
+            self::ROLE_ADMIN => 'Admin',
+            self::ROLE_DINAS => 'Dinas Pendidikan',
+            self::ROLE_SEKOLAH => 'Sekolah',
+            default => ucfirst($this->role ?? ''),
+        };
     }
 }

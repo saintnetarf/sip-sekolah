@@ -1,51 +1,93 @@
-# Aplikasi SIG Sekolah (Laravel + MySQL + OpenStreetMap)
+# Aplikasi SIG Sekolah (Laravel + MySQL + OpenStreetMap + RBAC)
 
-Aplikasi Sistem Informasi Geografis (SIG) untuk pendataan sekolah beserta titik koordinatnya dengan visualisasi peta interaktif berbasis OpenStreetMap dan Leaflet.
+Aplikasi Sistem Informasi Geografis (SIG) untuk pendataan sekolah beserta titik koordinatnya dengan visualisasi peta interaktif berbasis OpenStreetMap dan Leaflet, dilengkapi dengan fitur Autentikasi dan Kontrol Akses Berbasis Peran (*Role-Based Access Control* / RBAC).
 
 ---
 
 ## 1. Fitur Utama
 
-- **Peta Publik (`/`)**:
-  - Peta digital OpenStreetMap Leaflet interaktif.
-  - Menampilkan sebaran seluruh sekolah di Kota Banjarmasin dan sekitarnya.
-  - Filter jenjang pendidikan (Semua jenjang, SD, SMP, SMA, SMK).
-  - Popup detail sekolah: Nama, NPSN, Jenjang, Status, Alamat, Kecamatan, Telepon, dan Koordinat.
-  - Proteksi XSS (escape HTML pada popup peta).
-- **Endpoint GeoJSON (`/data/sekolah`)**:
-  - Format standar GeoJSON `FeatureCollection`.
-  - Koordinat standar `[longitude, latitude]`.
-  - Filter parameter `?jenjang=`.
-- **Manajemen Data Sekolah / Admin (`/admin/sekolah`)**:
-  - Daftar data sekolah dengan pencarian dinamis (`?q=`) berdasarkan nama, NPSN, atau kecamatan.
-  - Paginasi data (10 data per halaman).
-  - Formulir tambah dan ubah data dilengkapi peta interaktif (`map-picker`):
-    - Klik pada peta untuk mengisi koordinat secara otomatis.
-    - Drag marker untuk menyesuaikan lokasi.
-    - Input koordinat manual yang langsung memusatkan marker pada peta.
-  - Hapus data dengan konfirmasi.
-  - Validasi ketat dan pesan kesalahan dalam Bahasa Indonesia.
+- **Peta Digital Publik (`/`)**:
+  - Peta interaktif Leaflet dengan basemap OpenStreetMap.
+  - Sebaran sekolah di Kota Banjarmasin dan sekitarnya.
+  - Filter jenjang pendidikan (SD, SMP, SMA, SMK).
+  - Popup detail sekolah: Nama, NPSN, Jenjang, Status, Kepala Sekolah, Akreditasi, Siswa/Guru, Alamat, Telepon, dan Koordinat.
+  - Proteksi XSS (escape HTML pada teks popup peta).
+- **Endpoint GeoJSON Publik (`/data/sekolah`)**:
+  - Format standar GeoJSON `FeatureCollection` dengan koordinat `[longitude, latitude]`.
+  - Properti publik mencakup informasi profil penting (kepala sekolah, akreditasi, siswa, guru).
+  - Data kontak sensitif/pribadi (email dan website) **tidak diekspos** di GeoJSON publik.
+- **Autentikasi Manual Bawaan Laravel (`/login`, `/logout`)**:
+  - Halaman login mandiri dengan desain modern.
+  - Proteksi *brute-force* dengan rate limiting (`throttle:5,1`).
+  - Session regeneration dan CSRF protection.
+- **Dashboard Berbasis Peran (`/dashboard`)**:
+  - **Admin**: Statistik jumlah akun per peran (*admin*, *dinas*, *sekolah*).
+  - **Dinas**: Jumlah total sekolah terdata dalam sistem.
+  - **Sekolah**: Informasi detail sekolah dan bilah persentase kelengkapan profil sekolah (dihitung dari 8 kolom profil).
+- **Manajemen Pengguna (`/admin/users`)**:
+  - Khusus peran **Admin**.
+  - CRUD pengguna (tambah, ubah, hapus akun), filter berdasarkan peran.
+  - Relasi dinamis ke sekolah untuk peran sekolah.
+  - Proteksi diri: Admin tidak dapat menghapus atau menurunkan peran akunnya sendiri.
+- **Manajemen Data Sekolah (`/dinas/sekolah`)**:
+  - Khusus peran **Dinas Pendidikan**.
+  - Tambah dan hapus sekolah, serta mengubah data dan profil sekolah mana pun.
+  - Pemilih koordinat interaktif (`map-picker`) dengan marker yang dapat digeser.
+- **Kelola Profil & Data Sekolah Sendiri (`/sekolah/{sekolah}/edit`, `/sekolah/{sekolah}/profil`)**:
+  - Khusus peran **Sekolah** (terikat ke sekolahnya sendiri) dan **Dinas**.
+  - Navigasi tab: Data Sekolah dan Profil Sekolah.
+  - Proteksi Policy: Akun sekolah hanya dapat mengakses dan mengubah sekolahnya sendiri.
+  - Proteksi NPSN: NPSN terkunci (*readonly*) bagi operator sekolah dan diabaikan saat pembaruan data di sisi server.
 
 ---
 
-## 2. Persyaratan Sistem
+## 2. Matriks Hak Akses (RBAC)
+
+| Fitur | Admin | Dinas Pendidikan | Sekolah | Publik |
+|---|:---:|:---:|:---:|:---:|
+| Melihat peta publik (`/`) & GeoJSON (`/data/sekolah`) | ✅ | ✅ | ✅ | ✅ |
+| Login & Dashboard (`/dashboard`) | ✅ | ✅ | ✅ | ❌ |
+| Kelola Pengguna (`/admin/users`) | ✅ | ❌ (403) | ❌ (403) | ❌ (302) |
+| Tambah & Hapus Sekolah (`/dinas/sekolah/*`) | ❌ (403) | ✅ | ❌ (403) | ❌ (302) |
+| Ubah Data Sekolah (`/sekolah/{id}/edit`) | ❌ (403) | Semua Sekolah | Sekolah Sendiri Saja | ❌ (302) |
+| Ubah Profil Sekolah (`/sekolah/{id}/profil`) | ❌ (403) | Semua Sekolah | Sekolah Sendiri Saja | ❌ (302) |
+| Mengubah NPSN Sekolah | ❌ | ✅ | ❌ (Terkunci) | ❌ |
+
+---
+
+## 3. Akun Demo untuk Pengujian
+
+Semua akun demo di bawah ini menggunakan kata sandi bawaan: `password123`
+
+| Peran | Nama Akun | Email Login | Kata Sandi | Keterangan Akses |
+|---|---|---|---|---|
+| **Admin** | Admin Sistem | `admin@sig.test` | `password123` | Akses penuh manajemen pengguna sistem. |
+| **Dinas** | Dinas Pendidikan | `dinas@sig.test` | `password123` | Akses penuh seluruh data sekolah dan profil sekolah. |
+| **Sekolah 1** | Operator Sekolah 1 | `sekolah1@sig.test` | `password123` | Akses data & profil sekolah pertama (`id: 1`). |
+| **Sekolah 2** | Operator Sekolah 2 | `sekolah2@sig.test` | `password123` | Akses data & profil sekolah kedua (`id: 2`). |
+
+> [!NOTE]
+> Kata sandi `password123` hanya digunakan untuk keperluan praktikum dan pengembangan lokal.
+
+---
+
+## 4. Persyaratan Sistem
 
 - PHP >= 8.3 (Diuji pada PHP 8.4)
-- MySQL Server (misal melalui DBngin, Homebrew, atau XAMPP)
+- MySQL Server (misal via DBngin, Homebrew, atau XAMPP)
 - Composer
 - Node.js & npm
 
 ---
 
-## 3. Langkah Instalasi
+## 5. Langkah Instalasi
 
-1. **Masuk ke folder proyek:**
+1. **Clone repository dan masuk ke direktori:**
    ```bash
    cd sig-sekolah
    ```
 
 2. **Buat Database MySQL:**
-   Pastikan MySQL berjalan, lalu buat database:
    ```sql
    CREATE DATABASE sig_sekolah CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
    ```
@@ -55,7 +97,7 @@ Aplikasi Sistem Informasi Geografis (SIG) untuk pendataan sekolah beserta titik 
    ```bash
    cp .env.example .env
    ```
-   Pastikan konfigurasi database di `.env` sesuai:
+   Pastikan pengaturan koneksi database di `.env` sesuai dengan lingkungan Anda:
    ```env
    DB_CONNECTION=mysql
    DB_HOST=127.0.0.1
@@ -75,11 +117,12 @@ Aplikasi Sistem Informasi Geografis (SIG) untuk pendataan sekolah beserta titik 
    php artisan key:generate
    ```
 
-6. **Migrasi Database & Seeder:**
-   Jalankan migrasi tabel `sekolahs` dan data awal 8 sekolah contoh:
+6. **Jalankan Migrasi & Seeder Database:**
    ```bash
-   php artisan migrate --seed
+   php artisan migrate
+   php artisan db:seed
    ```
+   *Perintah ini akan membuat struktur tabel `sekolahs`, `users`, `profil_sekolahs` serta menyuntikkan data sekolah awal dan empat akun demo.*
 
 7. **Instal dan Build Dependensi Frontend (Tailwind CSS & Vite):**
    ```bash
@@ -89,32 +132,35 @@ Aplikasi Sistem Informasi Geografis (SIG) untuk pendataan sekolah beserta titik 
 
 ---
 
-## 4. Menjalankan Aplikasi
+## 6. Menjalankan Aplikasi
 
-Jalankan local development server Laravel:
+Jalankan server lokal Laravel:
 ```bash
 php artisan serve
 ```
 
-Buka browser dan akses URL berikut:
+Akses tautan utama pada browser:
 - **Peta Publik:** [http://127.0.0.1:8000/](http://127.0.0.1:8000/)
-- **Kelola Data Sekolah (Admin):** [http://127.0.0.1:8000/admin/sekolah](http://127.0.0.1:8000/admin/sekolah)
-- **Endpoint Data GeoJSON:** [http://127.0.0.1:8000/data/sekolah](http://127.0.0.1:8000/data/sekolah)
+- **Halaman Login:** [http://127.0.0.1:8000/login](http://127.0.0.1:8000/login)
+- **Dashboard:** [http://127.0.0.1:8000/dashboard](http://127.0.0.1:8000/dashboard)
 
 ---
 
-## 5. Menjalankan Pengujian Otomatis
+## 7. Menjalankan Pengujian Otomatis
 
-Jalankan test suite menggunakan PHPUnit:
+Aplikasi ini dilengkapi pengujian otomatis lengkap menggunakan PHPUnit dan database in-memory SQLite:
+
 ```bash
 php artisan test
 ```
 
-Semua 12 pengujian mencakup fungsionalitas CRUD, validasi input, GeoJSON koordinat, filter jenjang, dan respons HTTP.
+Uji fitur mencakup:
+- **`SekolahTest`**: Pengujian fungsionalitas CRUD sekolah oleh dinas, validasi koordinat dan NPSN, GeoJSON formatting, dan filter jenjang.
+- **`RbacTest`**: Pengujian autentikasi, redirect tamu, pembatasan hak akses tiap peran (Admin, Dinas, Sekolah), proteksi NPSN, penyimpanan profil, perlindungan penghapusan diri admin, pembatasan rate limiter login (429), dan proteksi privasi kontak GeoJSON.
 
 ---
 
-## 6. Catatan Keamanan
+## 8. Catatan Keamanan
 
-> [!WARNING]
-> Halaman admin pada modul praktikum ini sengaja dibuat tanpa autentikasi / login untuk keperluan pembelajaran praktikum SIG. Jangan mempublikasikan aplikasi ini ke internet publik sebelum menambahkan mekanisme autentikasi (misalnya Laravel Breeze, Fortify, atau middleware auth).
+1. **Kata Sandi Demo**: Seluruh kata sandi demo (`password123`) wajib diganti sebelum aplikasi dipublikasikan ke server produksi.
+2. **Fitur Tambahan yang Direkomendasikan**: Untuk rilis publik skala penuh, tambahkan fitur lupa kata sandi (*password reset token*), verifikasi alamat email (*MustVerifyEmail*), dan audit log aktivitas (*activity logging*).

@@ -3,7 +3,10 @@
         <!-- NPSN -->
         <div>
             <label for="npsn" class="block text-sm font-medium text-gray-700">NPSN <span class="text-red-500">*</span></label>
-            <input type="text" name="npsn" id="npsn" maxlength="8" value="{{ old('npsn', $sekolah->npsn) }}" placeholder="8 digit angka (contoh: 30000001)" class="mt-1 block w-full px-3 py-2 border @error('npsn') border-red-300 ring-1 ring-red-500 @else border-gray-300 @enderror rounded-lg shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+            <input type="text" name="npsn" id="npsn" maxlength="8" value="{{ old('npsn', $sekolah->npsn) }}" @readonly(auth()->user()->isSekolah()) placeholder="8 digit angka (contoh: 30000001)" class="mt-1 block w-full px-3 py-2 border @error('npsn') border-red-300 ring-1 ring-red-500 @else border-gray-300 @enderror {{ auth()->user()->isSekolah() ? 'bg-gray-100 cursor-not-allowed text-gray-600' : '' }} rounded-lg shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm font-mono">
+            @if (auth()->user()->isSekolah())
+                <p class="mt-1 text-xs text-gray-500">NPSN tidak dapat diubah oleh operator sekolah.</p>
+            @endif
             @error('npsn')
                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
             @enderror
@@ -103,7 +106,7 @@
 
     <!-- Tombol Aksi -->
     <div class="flex items-center justify-end space-x-3 pt-4 border-t border-gray-200">
-        <a href="{{ route('admin.sekolah.index') }}" class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
+        <a href="{{ auth()->user()->isDinas() ? route('dinas.sekolah.index') : route('dashboard') }}" class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
             Batal
         </a>
         <button type="submit" class="px-5 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition">

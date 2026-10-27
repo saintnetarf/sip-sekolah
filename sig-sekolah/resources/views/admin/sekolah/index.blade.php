@@ -9,7 +9,7 @@
             <p class="text-sm text-gray-500 mt-1">Daftar seluruh sekolah dan lokasi koordinatnya</p>
         </div>
         <div>
-            <a href="{{ route('admin.sekolah.create') }}" class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition">
+            <a href="{{ route('dinas.sekolah.create') }}" class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                 </svg>
@@ -20,7 +20,7 @@
 
     <!-- Kolom Pencarian -->
     <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-        <form method="GET" action="{{ route('admin.sekolah.index') }}" class="flex flex-col sm:flex-row gap-3">
+        <form method="GET" action="{{ route('dinas.sekolah.index') }}" class="flex flex-col sm:flex-row gap-3">
             <div class="relative flex-1">
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -34,7 +34,7 @@
                     Cari
                 </button>
                 @if (request('q'))
-                    <a href="{{ route('admin.sekolah.index') }}" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 transition">
+                    <a href="{{ route('dinas.sekolah.index') }}" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 transition">
                         Reset
                     </a>
                 @endif
@@ -93,12 +93,12 @@
                             </td>
                             <td class="px-4 py-3 text-center">
                                 <div class="inline-flex items-center space-x-2">
-                                    <a href="{{ route('admin.sekolah.edit', $sekolah) }}" class="p-1.5 text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50 rounded transition" title="Ubah">
+                                    <a href="{{ route('sekolah.edit', $sekolah) }}" class="p-1.5 text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50 rounded transition" title="Ubah">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                                         </svg>
                                     </a>
-                                    <form method="POST" action="{{ route('admin.sekolah.destroy', $sekolah) }}" onsubmit="return confirm('Apakah Anda yakin ingin menghapus data sekolah ini?');" class="inline">
+                                    <form method="POST" action="{{ route('dinas.sekolah.destroy', $sekolah) }}" onsubmit="return confirm('Apakah Anda yakin ingin menghapus data sekolah ini?');" class="inline">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="p-1.5 text-red-600 hover:text-red-900 hover:bg-red-50 rounded transition" title="Hapus">

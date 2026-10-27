@@ -3,12 +3,23 @@
 namespace Tests\Feature;
 
 use App\Models\Sekolah;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class SekolahTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected User $dinas;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->withoutVite();
+        $this->dinas = User::factory()->create(['role' => User::ROLE_DINAS]);
+        $this->actingAs($this->dinas);
+    }
 
     private function validPayload(array $overrides = []): array
     {
@@ -32,9 +43,9 @@ class SekolahTest extends TestCase
     {
         $payload = $this->validPayload();
 
-        $response = $this->post(route('admin.sekolah.store'), $payload);
+        $response = $this->post(route('dinas.sekolah.store'), $payload);
 
-        $response->assertRedirect(route('admin.sekolah.index'));
+        $response->assertRedirect(route('dinas.sekolah.index'));
         $response->assertSessionHas('success');
 
         $this->assertDatabaseCount('sekolahs', 1);
@@ -51,7 +62,7 @@ class SekolahTest extends TestCase
     {
         $payload = $this->validPayload(['nama' => '']);
 
-        $response = $this->post(route('admin.sekolah.store'), $payload);
+        $response = $this->post(route('dinas.sekolah.store'), $payload);
 
         $response->assertSessionHasErrors('nama');
         $this->assertDatabaseCount('sekolahs', 0);
@@ -64,7 +75,7 @@ class SekolahTest extends TestCase
     {
         Sekolah::create($this->validPayload(['npsn' => '30000001']));
 
-        $response = $this->post(route('admin.sekolah.store'), $this->validPayload([
+        $response = $this->post(route('dinas.sekolah.store'), $this->validPayload([
             'npsn' => '30000001',
             'nama' => 'SD Lain dengan NPSN Sama',
         ]));
@@ -80,7 +91,7 @@ class SekolahTest extends TestCase
     {
         $payload = $this->validPayload(['latitude' => 120]);
 
-        $response = $this->post(route('admin.sekolah.store'), $payload);
+        $response = $this->post(route('dinas.sekolah.store'), $payload);
 
         $response->assertSessionHasErrors('latitude');
         $this->assertDatabaseCount('sekolahs', 0);
@@ -93,7 +104,7 @@ class SekolahTest extends TestCase
     {
         $payload = $this->validPayload(['longitude' => 200]);
 
-        $response = $this->post(route('admin.sekolah.store'), $payload);
+        $response = $this->post(route('dinas.sekolah.store'), $payload);
 
         $response->assertSessionHasErrors('longitude');
         $this->assertDatabaseCount('sekolahs', 0);
@@ -106,12 +117,12 @@ class SekolahTest extends TestCase
     {
         $sekolah = Sekolah::create($this->validPayload());
 
-        $response = $this->put(route('admin.sekolah.update', $sekolah), $this->validPayload([
+        $response = $this->put(route('sekolah.update', $sekolah), $this->validPayload([
             'nama' => 'SD Negeri Contoh 1 Terupdate',
             'telepon' => '0511-9998888',
         ]));
 
-        $response->assertRedirect(route('admin.sekolah.index'));
+        $response->assertRedirect(route('dinas.sekolah.index'));
         $response->assertSessionHas('success');
 
         $this->assertDatabaseHas('sekolahs', [
@@ -130,9 +141,9 @@ class SekolahTest extends TestCase
 
         $this->assertDatabaseCount('sekolahs', 1);
 
-        $response = $this->delete(route('admin.sekolah.destroy', $sekolah));
+        $response = $this->delete(route('dinas.sekolah.destroy', $sekolah));
 
-        $response->assertRedirect(route('admin.sekolah.index'));
+        $response->assertRedirect(route('dinas.sekolah.index'));
         $response->assertSessionHas('success');
 
         $this->assertDatabaseCount('sekolahs', 0);
@@ -203,14 +214,14 @@ class SekolahTest extends TestCase
     }
 
     /**
-     * 10. / dan /admin/sekolah berstatus 200.
+     * 10. / dan /dinas/sekolah berstatus 200.
      */
     public function test_halaman_peta_dan_admin_sekolah_berstatus_200(): void
     {
         $responsePeta = $this->get(route('peta.index'));
         $responsePeta->assertStatus(200);
 
-        $responseAdmin = $this->get(route('admin.sekolah.index'));
+        $responseAdmin = $this->get(route('dinas.sekolah.index'));
         $responseAdmin->assertStatus(200);
     }
 }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Sekolah;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -27,7 +28,7 @@ class SekolahController extends Controller
 
         $sekolahs = $query->orderBy('nama')->paginate(10)->withQueryString();
 
-        return view('admin.sekolah.index', compact('sekolahs'));
+        return view('admin'.'/sekolah/index', compact('sekolahs'));
     }
 
     /**
@@ -35,9 +36,9 @@ class SekolahController extends Controller
      */
     public function create(): View
     {
-        $sekolah = new Sekolah();
+        $sekolah = new Sekolah;
 
-        return view('admin.sekolah.create', compact('sekolah'));
+        return view('admin'.'/sekolah/create', compact('sekolah'));
     }
 
     /**
@@ -49,7 +50,7 @@ class SekolahController extends Controller
 
         Sekolah::create($validated);
 
-        return redirect()->route('admin.sekolah.index')
+        return redirect()->route('dinas.sekolah.index')
             ->with('success', 'Data sekolah berhasil ditambahkan.');
     }
 
@@ -58,7 +59,9 @@ class SekolahController extends Controller
      */
     public function edit(Sekolah $sekolah): View
     {
-        return view('admin.sekolah.edit', compact('sekolah'));
+        Gate::authorize('update', $sekolah);
+
+        return view('admin'.'/sekolah/edit', compact('sekolah'));
     }
 
     /**
@@ -66,12 +69,21 @@ class SekolahController extends Controller
      */
     public function update(Request $request, Sekolah $sekolah): RedirectResponse
     {
+        Gate::authorize('update', $sekolah);
+
         $validated = $request->validate($this->rules($sekolah->id), $this->messages());
+
+        if ($request->user()->isSekolah()) {
+            unset($validated['npsn']);
+        }
 
         $sekolah->update($validated);
 
-        return redirect()->route('admin.sekolah.index')
-            ->with('success', 'Data sekolah berhasil diperbarui.');
+        $redirect = $request->user()->isDinas()
+            ? redirect()->route('dinas.sekolah.index')
+            : redirect()->route('dashboard');
+
+        return $redirect->with('success', 'Data sekolah berhasil diperbarui.');
     }
 
     /**
@@ -81,7 +93,7 @@ class SekolahController extends Controller
     {
         $sekolah->delete();
 
-        return redirect()->route('admin.sekolah.index')
+        return redirect()->route('dinas.sekolah.index')
             ->with('success', 'Data sekolah berhasil dihapus.');
     }
 
