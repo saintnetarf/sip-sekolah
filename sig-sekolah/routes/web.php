@@ -8,8 +8,17 @@ use App\Http\Controllers\SekolahController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', [PetaController::class, 'index'])->name('peta.index');
-Route::get('/data/sekolah', [PetaController::class, 'geojson'])->name('peta.data');
+Route::controller(PetaController::class)->group(function () {
+    Route::get('/', 'index')->name('peta.index');
+    Route::get('/pencarian', 'cari')->name('peta.cari');
+    Route::get('/klaster', 'klaster')->name('peta.klaster');
+    Route::get('/peta-panas', 'panas')->name('peta.panas');
+    Route::get('/wilayah', 'wilayah')->name('peta.wilayah');
+    Route::get('/rute', 'rute')->name('peta.rute');
+    Route::get('/cek-alamat', 'alamat')->name('peta.alamat');
+    Route::get('/data/sekolah', 'geojson')->name('peta.data');
+    Route::get('/data/wilayah', 'geojsonWilayah')->name('peta.data.wilayah');
+});
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');

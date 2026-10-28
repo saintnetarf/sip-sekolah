@@ -6,16 +6,17 @@ Aplikasi Sistem Informasi Geografis (SIG) untuk pendataan sekolah beserta titik 
 
 ## 1. Fitur Utama
 
-- **Peta Digital Publik (`/`)**:
-  - Peta interaktif Leaflet dengan basemap OpenStreetMap.
-  - Sebaran sekolah di Kota Banjarmasin dan sekitarnya.
-  - Filter jenjang pendidikan (SD, SMP, SMA, SMK).
-  - Popup detail sekolah: Nama, NPSN, Jenjang, Status, Kepala Sekolah, Akreditasi, Siswa/Guru, Alamat, Telepon, dan Koordinat.
-  - Proteksi XSS (escape HTML pada teks popup peta).
-- **Endpoint GeoJSON Publik (`/data/sekolah`)**:
-  - Format standar GeoJSON `FeatureCollection` dengan koordinat `[longitude, latitude]`.
-  - Properti publik mencakup informasi profil penting (kepala sekolah, akreditasi, siswa, guru).
-  - Data kontak sensitif/pribadi (email dan website) **tidak diekspos** di GeoJSON publik.
+- **Menu Peta Interaktif Publik (Praktikum 19-27)**:
+  - **Peta Sekolah (`/`)**: Marker sebaran sekolah, popup profil sekolah lengkap, dan filter jenjang (SD, SMP, SMA, SMK).
+  - **Pencarian (`/pencarian`)**: Pencarian instan (nama, NPSN, kecamatan) dengan *debounce* 300 ms, filter jenjang, dan panel hasil interaktif yang dapat diklik untuk terbang ke lokasi sekolah.
+  - **Klaster (`/klaster`)**: Pengelompokan marker berdekatan menjadi klaster interaktif menggunakan pustaka `Leaflet.markercluster`.
+  - **Peta Panas (`/peta-panas`)**: Visualisasi kepadatan sekolah atau populasi siswa dengan pengaturan slider radius dinamis (10-60 px) menggunakan pustaka `Leaflet.heat`.
+  - **Wilayah (`/wilayah`)**: Estimasi area sebaran sekolah per kecamatan menggunakan algoritma Convex Hull (*Andrew's Monotone Chain*), dilengkapi gradasi warna relatif terhadap kecamatan dengan sekolah terbanyak.
+  - **Rute Perjalanan (`/rute`)**: Perencanaan rute optimal antar 2 hingga 10 sekolah menggunakan OSRM API, dilengkapi panah penunjuk arah (`Leaflet.polylineDecorator`), penanda bernomor, estimasi jarak dan durasi, serta jalur cadangan otomatis (*fallback* garis lurus Haversine).
+  - **Cek Lokasi (`/cek-alamat`)**: Titik klik interaktif untuk reverse geocoding alamat via Nominatim API dan penghitungan otomatis 3 sekolah terdekat beserta jarak garis lurus dan garis penghubung.
+- **Endpoint GeoJSON Publik (`/data/sekolah`, `/data/wilayah`)**:
+  - `/data/sekolah`: Format standar GeoJSON `FeatureCollection` dengan koordinat `[longitude, latitude]`. Properti publik memuat detail profil sekolah tanpa mengekspos data pribadi seperti email dan website.
+  - `/data/wilayah`: Format GeoJSON Polygon poligon sebaran sekolah per kecamatan dengan properti `kecamatan`, `jumlah_sekolah`, dan `jumlah_siswa`.
 - **Autentikasi Manual Bawaan Laravel (`/login`, `/logout`)**:
   - Halaman login mandiri dengan desain modern.
   - Proteksi *brute-force* dengan rate limiting (`throttle:5,1`).
@@ -122,13 +123,26 @@ Semua akun demo di bawah ini menggunakan kata sandi bawaan: `password123`
    php artisan migrate
    php artisan db:seed
    ```
-   *Perintah ini akan membuat struktur tabel `sekolahs`, `users`, `profil_sekolahs` serta menyuntikkan data sekolah awal dan empat akun demo.*
+   *Perintah ini akan membuat struktur tabel `sekolahs`, `users`, `profil_sekolahs` serta menyuntikkan data sekolah awal (8 sekolah) dan empat akun demo.*
 
-7. **Instal dan Build Dependensi Frontend (Tailwind CSS & Vite):**
+7. **(Opsional) Suntikkan Data Demo Skala Penuh (106 Sekolah):**
+   Untuk menguji fitur peta visual interaktif (klaster, peta panas, poligon wilayah 5 kecamatan), jalankan seeder demo khusus:
+   ```bash
+   php artisan db:seed --class=SekolahDemoSeeder
+   ```
+   *Seeder ini bersifat idempoten (`updateOrCreate`) dan menghasilkan 106 sekolah demo tambahan dengan NPSN berawalan angka 9 (`9xxxxxxx`) di 5 kecamatan Kota Banjarmasin.*
+
+   Untuk menghapus seluruh data demo tersebut tanpa mengganggu data utama:
+   ```sql
+   DELETE FROM sekolahs WHERE npsn LIKE '9%';
+   ```
+
+8. **Instal dan Build Dependensi Frontend (Tailwind CSS & Vite untuk Admin/Dashboard):**
    ```bash
    npm install
    npm run build
    ```
+   *(Catatan: Frontend peta publik bekerja secara mandiri dengan Vanilla JS & Leaflet CDN tanpa dependensi bundler Vite)*
 
 ---
 
@@ -140,7 +154,13 @@ php artisan serve
 ```
 
 Akses tautan utama pada browser:
-- **Peta Publik:** [http://127.0.0.1:8000/](http://127.0.0.1:8000/)
+- **Peta Sekolah:** [http://127.0.0.1:8000/](http://127.0.0.1:8000/)
+- **Pencarian Sekolah:** [http://127.0.0.1:8000/pencarian](http://127.0.0.1:8000/pencarian)
+- **Klaster Marker:** [http://127.0.0.1:8000/klaster](http://127.0.0.1:8000/klaster)
+- **Peta Panas (Heatmap):** [http://127.0.0.1:8000/peta-panas](http://127.0.0.1:8000/peta-panas)
+- **Wilayah Sebaran (Convex Hull):** [http://127.0.0.1:8000/wilayah](http://127.0.0.1:8000/wilayah)
+- **Rute Perjalanan:** [http://127.0.0.1:8000/rute](http://127.0.0.1:8000/rute)
+- **Cek Lokasi & Alamat:** [http://127.0.0.1:8000/cek-alamat](http://127.0.0.1:8000/cek-alamat)
 - **Halaman Login:** [http://127.0.0.1:8000/login](http://127.0.0.1:8000/login)
 - **Dashboard:** [http://127.0.0.1:8000/dashboard](http://127.0.0.1:8000/dashboard)
 
@@ -157,10 +177,15 @@ php artisan test
 Uji fitur mencakup:
 - **`SekolahTest`**: Pengujian fungsionalitas CRUD sekolah oleh dinas, validasi koordinat dan NPSN, GeoJSON formatting, dan filter jenjang.
 - **`RbacTest`**: Pengujian autentikasi, redirect tamu, pembatasan hak akses tiap peran (Admin, Dinas, Sekolah), proteksi NPSN, penyimpanan profil, perlindungan penghapusan diri admin, pembatasan rate limiter login (429), dan proteksi privasi kontak GeoJSON.
+- **`PetaMenuTest`**: Pengujian 10 skenario menu peta interaktif: status 200 ketujuh menu, navigasi publik, hak akses menu, endpoint GeoJSON numerik `[lng, lat]`, filter jenjang, isolasi privasi profil, algoritma Geometri Convex Hull (persegi & collinear), pembentukan poligon tertutup `/data/wilayah`, dan filtering poligon wilayah.
 
 ---
 
-## 8. Catatan Keamanan
+## 8. Catatan Batasan Layanan Eksternal & Keamanan
 
-1. **Kata Sandi Demo**: Seluruh kata sandi demo (`password123`) wajib diganti sebelum aplikasi dipublikasikan ke server produksi.
-2. **Fitur Tambahan yang Direkomendasikan**: Untuk rilis publik skala penuh, tambahkan fitur lupa kata sandi (*password reset token*), verifikasi alamat email (*MustVerifyEmail*), dan audit log aktivitas (*activity logging*).
+1. **OpenStreetMap Basemap Tile**: Menggunakan tile publik `tile.openstreetmap.org` dengan atribusi resmi OpenStreetMap contributors. Tidak memerlukan API key.
+2. **Nominatim Reverse Geocoding**: Menggunakan server publik Nominatim (`nominatim.openstreetmap.org/reverse`) dengan batas laju ketat pada sisi klien (minimal jeda 1200 ms per permintaan) dan parameter `accept-language=id`. Layanan publik ini hanya diperuntukkan bagi penggunaan interaktif wajar; untuk skala produksi disarankan memasang instance Nominatim lokal.
+3. **OSRM Routing Demo**: Menggunakan server demo publik `router.project-osrm.org`. Aplikasi dilengkapi mekanisme *fallback* (jalur cadangan) otomatis berupa perhitungan garis lurus (Haversine) per ruas jalan apabila server routing OSRM mengalami gangguan atau kelebihan beban.
+4. **Pustaka Peta via CDN (unpkg)**: Pustaka Leaflet (`1.9.4`), `leaflet.markercluster` (`1.4.1`), `leaflet.heat` (`0.2.0`), dan `leaflet-polylinedecorator` (`1.6.0`) dimuat dari CDN publik unpkg. Untuk lingkungan produksi mandiri (*offline/intranet*), aset skrip dan CSS ini dapat diunduh ke direktori `public/vendor`.
+5. **Poligon Wilayah**: Poligon sebaran kecamatan dihasilkan dari algoritma matematis *Convex Hull* (Monotone Chain) berdasarkan sebaran koordinat titik sekolah terdata. Poligon ini berfungsi sebagai estimasi jangkauan area sebaran sekolah dan **bukan** merupakan batas wilayah administrasi resmi pemerintah.
+6. **Kata Sandi Demo**: Seluruh kata sandi demo (`password123`) wajib diganti sebelum aplikasi dipublikasikan ke server produksi.
