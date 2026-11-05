@@ -94,6 +94,7 @@ class RbacTest extends TestCase
         $dinas = $this->user('dinas');
 
         $this->actingAs($dinas)->get('/dinas/sekolah')->assertOk();
+        $this->actingAs($dinas)->get('/dinas/sekolah/create')->assertOk();
         $this->actingAs($dinas)->get("/sekolah/{$a->id}/edit")->assertOk();
         $this->actingAs($dinas)->get("/sekolah/{$a->id}/profil")->assertOk();
         $this->actingAs($dinas)->get('/admin/users')->assertForbidden();
