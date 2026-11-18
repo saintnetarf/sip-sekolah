@@ -4,7 +4,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
-RUN npm run build
+RUN chmod -R +x node_modules/.bin && npm run build
  
 # Tahap 2: PHP + FrankenPHP
 FROM dunglas/frankenphp:1-php8.4-bookworm AS base
