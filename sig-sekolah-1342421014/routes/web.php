@@ -16,6 +16,9 @@ Route::controller(PetaController::class)->group(function () {
     Route::get('/peta-panas', 'panas')->name('peta.panas');
     Route::get('/wilayah', 'wilayah')->name('peta.wilayah');
     Route::get('/data/wilayah', 'geojsonWilayah')->name('peta.data.wilayah');
+    Route::get('/rute', 'rute')->name('peta.rute');
+    Route::get('/cek-alamat', 'alamat')->name('peta.alamat');
+
 
 });
 // di dalam Route::controller(PetaController::class)->group(...)

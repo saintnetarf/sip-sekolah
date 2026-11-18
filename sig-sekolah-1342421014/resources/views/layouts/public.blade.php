@@ -77,8 +77,10 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         window.PETA_URL = {
-            data: "{{ route('peta.data') }}",
-        };
+    data: "{{ route('peta.data') }}",
+    wilayah: "{{ route('peta.data.wilayah') }}",
+};
+
     </script>
     <script src="{{ asset('js/peta.js') }}"></script>
     @stack('scripts')
