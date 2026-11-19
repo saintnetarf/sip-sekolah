@@ -28,12 +28,13 @@ RUN composer install \
     --prefer-dist
  
 COPY . .
-RUN mkdir -p \
+RUN rm -rf bootstrap/cache/*.php \
+    && mkdir -p \
         storage/framework/cache \
         storage/framework/sessions \
         storage/framework/views \
         bootstrap/cache \
-    && composer dump-autoload --no-dev --classmap-authoritative
+    && composer dump-autoload --no-dev --classmap-authoritative --no-scripts
  
 # Tahap 4: image akhir
 FROM base AS runtime
